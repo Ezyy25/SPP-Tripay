@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 use App\Http\Controllers\Admin\TagihanController as AdminTagihanController;
 use App\Http\Controllers\Admin\TagihanScheduleController as AdminTagihanScheduleController;
+use App\Http\Controllers\Admin\NotifikasiController as AdminNotifikasiController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\TripayController;
 
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
         }]
     ], function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/notifikasi', [AdminNotifikasiController::class, 'index'])->name('notifikasi.index');
         Route::resource('siswa', AdminSiswaController::class);
 
         // Tagihan
