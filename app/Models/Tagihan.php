@@ -21,6 +21,9 @@ class Tagihan extends Model
         'description',
         'status',
         'due_date',
+        'reference',
+        'payment_method',
+        'checkout_url',
     ];
 
     public function siswa()

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\TripayService;
 use App\Models\Tagihan;
 use App\Models\Pembayaran;
+use App\Notifications\TagihanPembayaranNotification;
 use Illuminate\Support\Facades\Auth;
 
 class TripayController extends Controller
@@ -20,6 +21,7 @@ class TripayController extends Controller
     public function success($id)
     {
         $tagihan = Tagihan::findOrFail($id);
+        $wasPaid = in_array(strtolower(trim((string) $tagihan->status)), ['paid', 'lunas', 'success', '1']);
 
         // Ubah status tagihan siswa menjadi lunas
         $tagihan->update([
@@ -27,7 +29,7 @@ class TripayController extends Controller
         ]);
 
         // Simpan ke riwayat tabel Pembayaran
-        Pembayaran::firstOrCreate(
+        $pembayaran = Pembayaran::firstOrCreate(
             ['tagihan_id' => $tagihan->id],
             [
                 'kode_transaksi'    => 'TRX-' . time() . '-' . $tagihan->id,
@@ -40,6 +42,10 @@ class TripayController extends Controller
                 'paid_at'           => now(),
             ]
         );
+
+        if (!$wasPaid && $tagihan->siswa) {
+            $tagihan->siswa->notify(new TagihanPembayaranNotification($tagihan, $pembayaran));
+        }
 
         return view('siswa.pembayaran.success', compact('tagihan'));
     }
@@ -124,12 +130,13 @@ class TripayController extends Controller
 
             if ($tagihan) {
                 if ($status === 'PAID') {
+                    $wasPaid = in_array(strtolower(trim((string) $tagihan->status)), ['paid', 'lunas', 'success', '1']);
                     $tagihan->update([
                         'status' => 'lunas',
                     ]);
 
                     // Catat riwayat permanen ke tabel Pembayaran
-                    Pembayaran::firstOrCreate(
+                    $pembayaran = Pembayaran::firstOrCreate(
                         ['tagihan_id' => $tagihan->id],
                         [
                             'kode_transaksi'    => 'TRX-' . time() . '-' . $tagihan->id,
@@ -142,6 +149,10 @@ class TripayController extends Controller
                             'paid_at'           => now(),
                         ]
                     );
+
+                    if (!$wasPaid && $tagihan->siswa) {
+                        $tagihan->siswa->notify(new TagihanPembayaranNotification($tagihan, $pembayaran));
+                    }
 
                 } elseif (in_array($status, ['EXPIRED', 'FAILED'])) {
                     $tagihan->update([

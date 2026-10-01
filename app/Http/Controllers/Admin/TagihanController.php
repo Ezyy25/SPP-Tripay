@@ -8,6 +8,7 @@ use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Notifications\TagihanBaruNotification;
+use App\Notifications\TagihanPembayaranNotification;
 
 class TagihanController extends Controller
 {
@@ -217,7 +218,7 @@ return redirect()->route('admin.tagihan.index')->with('success', 'Tagihan berhas
             \App\Models\Pembayaran::where('tagihan_id', $tagihan->id)->delete();
         } else {
             $tagihan->status = 'paid';
-            \App\Models\Pembayaran::create([
+            $pembayaran = \App\Models\Pembayaran::create([
                 'siswa_id' => $tagihan->siswa_id,
                 'tagihan_id' => $tagihan->id,
                 'nominal' => $tagihan->nominal,
@@ -228,6 +229,11 @@ return redirect()->route('admin.tagihan.index')->with('success', 'Tagihan berhas
         }
 
         $tagihan->save();
+
+        if (isset($pembayaran) && $tagihan->siswa) {
+            $tagihan->siswa->notify(new TagihanPembayaranNotification($tagihan, $pembayaran));
+        }
+
         return redirect()->back()->with('success', 'Status tagihan berhasil diperbarui!');
     }
 
