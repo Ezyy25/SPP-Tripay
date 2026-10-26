@@ -187,7 +187,7 @@ return redirect()->route('admin.tagihan.index')->with('success', 'Tagihan berhas
         $bulan = (int) $request->get('bulan', date('m'));
         $tahun = (int) $request->get('tahun', date('Y'));
 
-        $tagihans = Tagihan::withTrashed()
+        $tagihans = Tagihan::query()
             ->with(['siswa.user', 'pembayarans'])
             ->where('bulan', $bulan)
             ->where('tahun', $tahun)
